@@ -108,8 +108,8 @@ if ($packageId.Contains(".")) { # check to see if the packageId contains a perio
 		if($wingetOutput -is [array]) { # the output will be either an array of lines or a string when it is just one line.
 
 			$columns = Get-ColumnValuesFromWingetOutput -Output $wingetOutput
-			if ($columns.Length -lt 4) {
-				Write-Host "Got invalid column count $($columns.Length) expected at least 4, exiting with code 10"
+			if ($columns.Length -lt 3) {
+				Write-Host "Got invalid column count $($columns.Length) expected at least 3, exiting with code 10"
 				Write-Host "Winget output:"
 				Write-Host "$($wingetOutput)"
 				Exit 10
