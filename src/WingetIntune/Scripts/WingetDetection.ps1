@@ -100,36 +100,75 @@ if ($null -eq $wingetCmd) {
     Exit 1
 }
 
-$wingetOutput = & $wingetCmd "list" "--id" $packageId "--exact" "--accept-source-agreements"
+if ($packageId.Contains(".")) { # check to see if the packageId contains a period, this should be most of them
+	$idArray = $packageId.Split(".") # split the package id at the period
+	foreach ($id in $idArray) { # loop through each id in the array
+		$wingetOutput = & $wingetCmd "list" "--name" $id "--exact" "--accept-source-agreements"
 
-if($wingetOutput -is [array]) { # the output will be either an array of lines or a string when it is just one line.
+		if($wingetOutput -is [array]) { # the output will be either an array of lines or a string when it is just one line.
 
-    $columns = Get-ColumnValuesFromWingetOutput -Output $wingetOutput
-    if ($columns.Length -lt 4) {
-        Write-Host "Got invalid column count $($columns.Length) expected at least 4, exiting with code 10"
-        Write-Host "Winget output:"
-        Write-Host "$($wingetOutput)"
-        Exit 10
-    }
+			$columns = Get-ColumnValuesFromWingetOutput -Output $wingetOutput
+			if ($columns.Length -lt 4) {
+				Write-Host "Got invalid column count $($columns.Length) expected at least 4, exiting with code 10"
+				Write-Host "Winget output:"
+				Write-Host "$($wingetOutput)"
+				Exit 10
+			}
 
-    if ($columns[1] -eq $packageId) {
-        if ($null -eq $version -or $version -eq "") {
-            Write-Host "$($packageId) version $($columns[2]) is installed, exiting with code 0"
-            Exit 0
-        }
-        if ($columns[2] -eq $version) {
-            Write-Host "$($packageId) version $($version) is installed, exiting with code 0"
-            Exit 0
-        }
-        $versionValue = Compare-Versions -VersionExpected $version -VersionInstalled $columns[2]
-        if ($versionValue -lt 0) {
-            Write-Host "$($packageId) is installed but $($columns[2]) is lower than expected $($version), exit code 4"
-            Exit 4
-        } else {
-            Write-Host "$($packageId) is installed $($columns[2]) is equal of higher than expected $($version), exit code 0"
-            Exit 0
-        }
-    }
+			if ($columns[1] -eq $id) {
+				if ($null -eq $version -or $version -eq "") {
+					Write-Host "$($id) version $($columns[2]) is installed, exiting with code 0"
+					Exit 0
+				}
+				if ($columns[2] -eq $version) {
+					Write-Host "$($id) version $($version) is installed, exiting with code 0"
+					Exit 0
+				}
+				$versionValue = Compare-Versions -VersionExpected $version -VersionInstalled $columns[2]
+				if ($versionValue -lt 0) {
+					Write-Host "$($id) is installed but $($columns[2]) is lower than expected $($version), exit code 4"
+					Exit 4
+				} else {
+					Write-Host "$($id) is installed $($columns[2]) is equal of higher than expected $($version), exit code 0"
+					Exit 0
+				}
+			}
+		}
+	}
+	
+}
+else {
+	$wingetOutput = & $wingetCmd "list" "--id" $packageId "--exact" "--accept-source-agreements"
+
+	if($wingetOutput -is [array]) { # the output will be either an array of lines or a string when it is just one line.
+
+		$columns = Get-ColumnValuesFromWingetOutput -Output $wingetOutput
+		if ($columns.Length -lt 4) {
+			Write-Host "Got invalid column count $($columns.Length) expected at least 4, exiting with code 10"
+			Write-Host "Winget output:"
+			Write-Host "$($wingetOutput)"
+			Exit 10
+		}
+
+		if ($columns[1] -eq $packageId) {
+			if ($null -eq $version -or $version -eq "") {
+				Write-Host "$($packageId) version $($columns[2]) is installed, exiting with code 0"
+				Exit 0
+			}
+			if ($columns[2] -eq $version) {
+				Write-Host "$($packageId) version $($version) is installed, exiting with code 0"
+				Exit 0
+			}
+			$versionValue = Compare-Versions -VersionExpected $version -VersionInstalled $columns[2]
+			if ($versionValue -lt 0) {
+				Write-Host "$($packageId) is installed but $($columns[2]) is lower than expected $($version), exit code 4"
+				Exit 4
+			} else {
+				Write-Host "$($packageId) is installed $($columns[2]) is equal of higher than expected $($version), exit code 0"
+				Exit 0
+			}
+		}
+	}
 }
 
 Write-Host "$($packageId) not detected using winget, exiting with code 10"
